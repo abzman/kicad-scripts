@@ -37,11 +37,11 @@ class contact_wizard(HFPW.FootprintWizard):
         self.AddParam("Pads", "trace width", self.uMM, 0.2)
         self.AddParam("Pads", "trace clearance", self.uMM, 0.2)
         self.AddParam("Pads", "width", self.uMM, 5)
-        self.AddParam("Pads", "height (for rectangular)", self.uMM, 5)
+        self.AddParam("Pads", "height", self.uMM, 5)
 
     def CheckParameters(self):
 
-        self.CheckParam("Pads", "style", min_value=1, max_value=3)
+        self.CheckParam("Pads", "style", min_value=1, max_value=2)
 
 
 
@@ -49,66 +49,13 @@ class contact_wizard(HFPW.FootprintWizard):
         
         return "contact"
 
-    def square_contact(self):
-
-        prm = self.parameters['Pads']
-        p_trace_width = prm['trace width']
-        p_trace_clearance = prm['trace clearance']
-        p_diameter = prm['width'];
-
-
-        spacing = p_trace_width + p_trace_clearance
-        pad_length = p_diameter - spacing 
-        radius = p_diameter/2
-        posY = -radius + p_trace_width / 2
-        alt = 0
-        
-        # draw horizontal bars
-        while posY <= radius:
-            posX = spacing * (2*alt-1) / 2
-
-            pad = PA.PadMaker(self.module).SMDPad(p_trace_width, pad_length, shape=pcbnew.PAD_SHAPE_RECT, rot_degree=0.0)
-            pos = self.draw.TransformPoint(posX, posY)
-            pad.SetPadName(1+alt)
-            pad.SetPos0(pos)
-            pad.SetPosition(pos)
-            pad.SetShape(pcbnew.PAD_SHAPE_OVAL)
-            pad.SetLayerSet(pad.ConnSMDMask())
-
-            pad.GetParent().Add(pad)
-              
-            posY = posY + spacing
-            alt = 1-alt
-
-        # vertical sides
-        
-        pad = PA.PadMaker(self.module).SMDPad(p_diameter, p_trace_width, shape=pcbnew.PAD_SHAPE_RECT, rot_degree=0.0)
-        pos = self.draw.TransformPoint(-p_diameter/2 + p_trace_width/2, 0)
-        pad.SetPadName(1)
-        pad.SetPos0(pos)
-        pad.SetPosition(pos)
-        pad.SetLayerSet(pad.ConnSMDMask())
-        pad.GetParent().Add(pad)
-      
-        pad = PA.PadMaker(self.module).SMDPad(p_diameter, p_trace_width, shape=pcbnew.PAD_SHAPE_RECT, rot_degree=0.0)
-        pos = self.draw.TransformPoint(p_diameter/2 - p_trace_width/2, 0)
-        pad.SetPadName(2)
-        pad.SetPos0(pos)
-        pad.SetPosition(pos)
-        pad.SetLayerSet(pad.ConnSMDMask())
-        pad.GetParent().Add(pad)
-
-        # 
-        body_radius = (p_diameter + self.draw.GetLineThickness())
-        self.draw.Box(0,0,body_radius, body_radius)
-
     def rectangle_contact(self):
 
         prm = self.parameters['Pads']
         p_trace_width = prm['trace width']
         p_trace_clearance = prm['trace clearance']
         p_width = prm['width'];
-        p_height = prm['height (for rectangular)'];
+        p_height = prm['height'];
 
 
         spacing = p_trace_width + p_trace_clearance
@@ -162,24 +109,28 @@ class contact_wizard(HFPW.FootprintWizard):
         prm = self.parameters['Pads']
         p_trace_width = prm['trace width']
         p_trace_clearance = prm['trace clearance']
-        p_diameter = prm['width'];
+        p_width = prm['width'];
+        p_height = prm['height'];
 
         spacing = p_trace_width + p_trace_clearance
-        radius = p_diameter/2
-        circumference = (p_diameter + p_trace_width) * math.pi
+        radiusX = p_width/2
+        radiusY = p_height/2
+        #circumference = (radiusX + radiusY + p_trace_width) * math.pi
+        circumference = (p_width + p_trace_width) * math.pi
         step_angle = p_trace_width / circumference * 360
-        inner_radius = radius - p_trace_clearance - p_trace_width/2
+        inner_radiusX = radiusX - p_trace_clearance - p_trace_width/2
+        inner_radiusY = radiusY - p_trace_clearance - p_trace_width/2
         # draw cross bars  
-        posY = -radius + p_trace_width
+        posY = -radiusY + p_trace_width
         alt = 0
         min_y = posY
  
-        while posY <= radius - p_trace_width:
-            len1 = math.sqrt (radius * radius - posY * posY)
+        while posY <= radiusY - p_trace_width:
+            len1 = math.sqrt (radiusX * radiusY - posY * posY) # fix
             #angle  = math.degrees(math.asin ((abs(posY + p_trace_width/2) ) / inner_radius))
             #gap = p_trace_clearance / math.sin(math.radians(angle))
             #len2 = len1 - gap
-            t = inner_radius * inner_radius - (abs(posY) + p_trace_width/2*1.2) ** 2
+            t = inner_radiusX * inner_radiusY - (abs(posY) + p_trace_width/2*1.2) ** 2
             if t>0:
                 len2 = math.sqrt (t) # - abs(math.sin(math.radians(angle)) * p_trace_width )
             else:
@@ -200,8 +151,8 @@ class contact_wizard(HFPW.FootprintWizard):
             posY = posY + spacing
             alt = 1-alt
 
-        angle1 = math.degrees(math.asin (min_y/radius))
-        angle2 = math.degrees(math.asin (max_y/radius))
+        angle1 = math.degrees(math.asin (min_y/radiusY))
+        angle2 = math.degrees(math.asin (max_y/radiusY))
         
         # draw the outer parts as an arc composed of small pads
         alt = 0
@@ -215,8 +166,8 @@ class contact_wizard(HFPW.FootprintWizard):
             
             angle = start_angle
             while angle <= last_angle:
-                posX = math.cos (math.radians(angle)) * radius
-                posY = math.sin (math.radians(angle)) * radius
+                posX = math.cos (math.radians(angle)) * radiusX
+                posY = math.sin (math.radians(angle)) * radiusY
                 pad = PA.PadMaker(self.module).SMDPad(p_trace_width, p_trace_width, shape=pcbnew.PAD_SHAPE_RECT, rot_degree=-angle)
                 pos = self.draw.TransformPoint(posX, posY)
                 pad.SetPadName(1+j)
@@ -228,8 +179,8 @@ class contact_wizard(HFPW.FootprintWizard):
                 
             if angle != last_angle:
                 angle = last_angle                
-                posX = math.cos (math.radians(angle)) * radius
-                posY = math.sin (math.radians(angle)) * radius
+                posX = math.cos (math.radians(angle)) * radiusX
+                posY = math.sin (math.radians(angle)) * radiusY
                 pad = PA.PadMaker(self.module).SMDPad(p_trace_width, p_trace_width, shape=pcbnew.PAD_SHAPE_RECT, rot_degree=-angle)
                 pos = self.draw.TransformPoint(posX, posY)
                 pad.SetPadName(1+j)
@@ -239,26 +190,38 @@ class contact_wizard(HFPW.FootprintWizard):
                 pad.GetParent().Add(pad)
         
         # circle on silkscreen
-        body_radius = (p_diameter/2 + p_trace_width/2 + self.draw.GetLineThickness())
-        self.draw.Circle(0, 0, body_radius)
+        body_radiusX = (p_width/2 + p_trace_width/2 + self.draw.GetLineThickness())
+        body_radiusY = (p_height/2 + p_trace_width/2 + self.draw.GetLineThickness())
+        last_angle = 360
+        angle = 0
+        last_posX = math.cos (math.radians(angle)) * body_radiusX
+        last_posY = math.sin (math.radians(angle)) * body_radiusY
+        while angle <= last_angle:
+            posX = math.cos (math.radians(angle)) * body_radiusX
+            posY = math.sin (math.radians(angle)) * body_radiusY
+            self.draw.Line(last_posX, last_posY, posX, posY)
+            last_posX = posX
+            last_posY = posY
+            angle = angle + step_angle
+            
+        if angle != last_angle:
+            posX = math.cos (math.radians(angle)) * body_radiusX
+            posY = math.sin (math.radians(angle)) * body_radiusY
+            self.draw.Line(last_posX, last_posY, posX, posY)
+            last_posX = posX
+            last_posY = posY
     
     def BuildThisFootprint(self):
 
         prm = self.parameters['Pads']
-        p_diameter = prm['width'];
+        p_diameter = prm['height'];
         p_style = prm['style']
          
         if p_style == 1:
-            self.square_contact()
-            p_diameter = prm['width'];
+            self.rectangle_contact()
         else:
-            if p_style == 2:
-                self.rectangle_contact()
-                p_diameter = prm['height (for rectangular)'];
-            else:
-                self.round_contact() 
-                p_diameter = prm['width'];
-
+            self.round_contact()
+        
         text_size = self.GetTextSize()  # IPC nominal
         thickness = self.GetTextThickness()
         body_radius = (p_diameter/2 + self.draw.GetLineThickness())
