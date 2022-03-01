@@ -36,8 +36,7 @@ class contact_wizard(HFPW.FootprintWizard):
         self.AddParam("Pads", "style", self.uInteger, 1)
         self.AddParam("Pads", "trace width", self.uMM, 0.2)
         self.AddParam("Pads", "trace clearance", self.uMM, 0.2)
-        self.AddParam("Pads", "diameter", self.uMM, 5)
-        self.AddParam("Pads", "width (for rectangular)", self.uMM, 5)
+        self.AddParam("Pads", "width", self.uMM, 5)
         self.AddParam("Pads", "height (for rectangular)", self.uMM, 5)
 
     def CheckParameters(self):
@@ -55,7 +54,7 @@ class contact_wizard(HFPW.FootprintWizard):
         prm = self.parameters['Pads']
         p_trace_width = prm['trace width']
         p_trace_clearance = prm['trace clearance']
-        p_diameter = prm['diameter'];
+        p_diameter = prm['width'];
 
 
         spacing = p_trace_width + p_trace_clearance
@@ -108,9 +107,8 @@ class contact_wizard(HFPW.FootprintWizard):
         prm = self.parameters['Pads']
         p_trace_width = prm['trace width']
         p_trace_clearance = prm['trace clearance']
-        p_diameter = prm['diameter'];
         p_width = prm['width'];
-        p_height = prm['height'];
+        p_height = prm['height (for rectangular)'];
 
 
         spacing = p_trace_width + p_trace_clearance
@@ -164,7 +162,7 @@ class contact_wizard(HFPW.FootprintWizard):
         prm = self.parameters['Pads']
         p_trace_width = prm['trace width']
         p_trace_clearance = prm['trace clearance']
-        p_diameter = prm['diameter'];
+        p_diameter = prm['width'];
 
         spacing = p_trace_width + p_trace_clearance
         radius = p_diameter/2
@@ -247,16 +245,19 @@ class contact_wizard(HFPW.FootprintWizard):
     def BuildThisFootprint(self):
 
         prm = self.parameters['Pads']
-        p_diameter = prm['diameter'];
+        p_diameter = prm['width'];
         p_style = prm['style']
          
         if p_style == 1:
             self.square_contact()
+            p_diameter = prm['width'];
         else:
             if p_style == 2:
                 self.rectangle_contact()
+                p_diameter = prm['height (for rectangular)'];
             else:
                 self.round_contact() 
+                p_diameter = prm['width'];
 
         text_size = self.GetTextSize()  # IPC nominal
         thickness = self.GetTextThickness()
