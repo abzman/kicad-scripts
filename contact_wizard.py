@@ -134,7 +134,7 @@ class contact_wizard(HFPW.FootprintWizard):
             #angle  = math.degrees(math.asin ((abs(posY + p_trace_width/2) ) / inner_radius))
             #gap = p_trace_clearance / math.sin(math.radians(angle))
             #len2 = len1 - gap
-            t = inner_radiusY * inner_radiusY - (abs(posY) + p_trace_width/2*1.2) ** 2
+            t = inner_radiusY * inner_radiusY - (abs(posY) + p_trace_width/2*1.2) ** 2# the 1.2 here is the gap at the ends, increase that if your ellipse pads don't have enough clearance at the ends
             if t>0:
                 len2 = math.sqrt (t) *  inner_radiusX / inner_radiusY # - abs(math.sin(math.radians(angle)) * p_trace_width )
             else:
