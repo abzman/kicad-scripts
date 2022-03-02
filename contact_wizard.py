@@ -117,7 +117,11 @@ class contact_wizard(HFPW.FootprintWizard):
         radiusY = p_height/2
         #circumference = (radiusX + radiusY + p_trace_width) * math.pi
         circumference = (p_width + p_trace_width) * math.pi
-        step_angle = p_trace_width / circumference * 360
+        if radiusX < radiusY:
+            angle_adjust = radiusX/radiusY
+        else:
+            angle_adjust = radiusY/radiusX
+        step_angle = p_trace_width / circumference * 360 * angle_adjust
         inner_radiusX = radiusX - p_trace_clearance - p_trace_width/2
         inner_radiusY = radiusY - p_trace_clearance - p_trace_width/2
         # draw cross bars  
@@ -126,13 +130,13 @@ class contact_wizard(HFPW.FootprintWizard):
         min_y = posY
  
         while posY <= radiusY - p_trace_width:
-            len1 = math.sqrt (radiusX * radiusY - posY * posY) # fix
+            len1 = math.sqrt (radiusY * radiusY - posY * posY) * radiusX / radiusY # fix
             #angle  = math.degrees(math.asin ((abs(posY + p_trace_width/2) ) / inner_radius))
             #gap = p_trace_clearance / math.sin(math.radians(angle))
             #len2 = len1 - gap
-            t = inner_radiusX * inner_radiusY - (abs(posY) + p_trace_width/2*1.2) ** 2
+            t = inner_radiusY * inner_radiusY - (abs(posY) + p_trace_width/2*1.2) ** 2
             if t>0:
-                len2 = math.sqrt (t) # - abs(math.sin(math.radians(angle)) * p_trace_width )
+                len2 = math.sqrt (t) *  inner_radiusX / inner_radiusY # - abs(math.sin(math.radians(angle)) * p_trace_width )
             else:
                 len2 = 0
             #len2 = len1 - spacing
@@ -168,7 +172,8 @@ class contact_wizard(HFPW.FootprintWizard):
             while angle <= last_angle:
                 posX = math.cos (math.radians(angle)) * radiusX
                 posY = math.sin (math.radians(angle)) * radiusY
-                pad = PA.PadMaker(self.module).SMDPad(p_trace_width, p_trace_width, shape=pcbnew.PAD_SHAPE_RECT, rot_degree=-angle)
+                adjangle = math.degrees(math.atan2(math.sin (-math.radians(angle))*radiusX,math.cos (math.radians(angle))*radiusY))
+                pad = PA.PadMaker(self.module).SMDPad(p_trace_width, p_trace_width, shape=pcbnew.PAD_SHAPE_RECT, rot_degree=adjangle)
                 pos = self.draw.TransformPoint(posX, posY)
                 pad.SetPadName(1+j)
                 pad.SetPos0(pos)
@@ -181,7 +186,8 @@ class contact_wizard(HFPW.FootprintWizard):
                 angle = last_angle                
                 posX = math.cos (math.radians(angle)) * radiusX
                 posY = math.sin (math.radians(angle)) * radiusY
-                pad = PA.PadMaker(self.module).SMDPad(p_trace_width, p_trace_width, shape=pcbnew.PAD_SHAPE_RECT, rot_degree=-angle)
+                adjangle = math.degrees(math.atan2(math.sin (-math.radians(angle))*radiusX,math.cos (math.radians(angle))*radiusY))
+                pad = PA.PadMaker(self.module).SMDPad(p_trace_width, p_trace_width, shape=pcbnew.PAD_SHAPE_RECT, rot_degree=adjangle)
                 pos = self.draw.TransformPoint(posX, posY)
                 pad.SetPadName(1+j)
                 pad.SetPos0(pos)
